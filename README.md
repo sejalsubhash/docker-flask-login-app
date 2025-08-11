@@ -1,52 +1,58 @@
+
+
 # 🐳 Dockerized Flask Login Application
 
-A simple user login and registration application built with **Flask** and **MySQL**, containerized using **Docker**. This app demonstrates how to:
+A simple user login and registration application built with **Flask** and **MySQL**, containerized using **Docker**.
+This app demonstrates how to:
 
-- Connect a Flask application to a MySQL database using Docker containers
-- Create a user authentication system with registration, login, and password encryption
-- Use Docker networks to enable container communication
+* Connect a Flask application to a MySQL database using Docker containers
+* Create a user authentication system with registration, login, and password encryption
+* Use Docker networks to enable container communication
+* Run the full stack with **Docker Compose** for simplified orchestration
 
 ---
 
 ## 📦 Prerequisites
 
-- Docker installed on your system
-- Git installed
+* Docker installed on your system
+* Docker Compose installed
+* Git installed
 
 ---
 
 ## 🚀 Steps to Run
 
-### 1. 📥 Clone the Project
+You can run this project in **two ways**:
+
+1. **Manual Docker Commands** (Step-by-step)
+2. **Docker Compose** (One command)
+
+---
+
+### **Option 1 — Manual Docker Commands**
+
+#### 1️⃣ Clone the Project
 
 ```bash
 git clone https://github.com/your-username/docker-flask-login-app.git
 cd docker-flask-login-app
-````
+```
 
-> Replace `your-username` with your actual GitHub username or use the correct repository URL.
+> Replace `your-username` with your actual GitHub username.
 
----
-
-### 2. 🐬 Pull the MySQL Docker Image
+#### 2️⃣ Pull MySQL Docker Image
 
 ```bash
 sudo docker pull mysql:8.0
 ```
 
----
-
-### 3. 🌐 Create Docker Network
-
-Create a custom Docker bridge network so that both containers can communicate easily:
+#### 3️⃣ Create Docker Network
 
 ```bash
 sudo docker network create <network_name>
 ```
 
----
-
-### 4. 🛠️ Run MySQL Container
+#### 4️⃣ Run MySQL Container
 
 ```bash
 sudo docker run -d \
@@ -58,59 +64,99 @@ sudo docker run -d \
   mysql:8.0
 ```
 
-> ✅ You can update the database name, user, and password as per your needs.
-
----
-
-### 5. 🔧 Configure `config.py` in Flask App
-
-Ensure `config.py` inside your cloned repo looks like:
+#### 5️⃣ Configure `config.py` in Flask App
 
 ```python
-DB_HOST = 'mysql'  #mysql container name
+DB_HOST = 'mysql'  # MySQL container name
 DB_USER = 'root'
 DB_PASSWORD = '<mysql-password>'
 DB_NAME = '<database_name>'
 ```
 
----
-
-### 6. 🛠️ Build Flask App Docker Image
+#### 6️⃣ Build Flask App Image
 
 ```bash
 sudo docker build -t docker-flask-login-app .
 ```
 
----
-
-### 7. 🏃‍♂️ Run Flask App Container
+#### 7️⃣ Run Flask App Container
 
 ```bash
- sudo docker run -d -p 5000:5000 --network <network_name> -e MYSQL_HOST=mysql -e MYSQL_USER=root -e MYSQL_PASSWORD=<mysql_password> -e MYSQL_DB=<database_name> docker-flask-login-app:latest
+sudo docker run -d \
+  -p 5000:5000 \
+  --network <network_name> \
+  -e MYSQL_HOST=mysql \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASSWORD=<mysql_password> \
+  -e MYSQL_DB=<database_name> \
+  docker-flask-login-app:latest
 ```
 
----
-
-### 8. 🌐 Access the Application
-
-Visit your browser at:
+#### 8️⃣ Access the App
 
 ```
 http://<your-ec2-public-ip>:5000
 ```
 
-Replace `<your-ec2-public-ip>` with your actual EC2 instance public IP address.
-
 ---
 
-## 🧹 Cleanup
+### **Option 2 — Run with Docker Compose** 🐙
 
-To stop and remove containers and the network:
+#### 1️⃣ Clone the Project
 
 ```bash
-sudo docker stop <container_name or container_Id>
-sudo docker rm <container_name or container_Id>
-sudo docker network rm <network_name>
+git clone https://github.com/your-username/docker-flask-login-app.git
+cd docker-flask-login-app
+```
+
+#### 2️⃣ Ensure `docker-compose.yml` looks like this:
+
+```yaml
+version: "3.8"
+
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: "login_app"
+      MYSQL_ROOT_PASSWORD: "root"
+    ports:
+      - "3306:3306"
+    networks:
+      - my-network
+
+  flask:
+    build:
+      context: .
+    container_name: dockerized-login-app
+    ports:
+      - "5000:5000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DB: login_app
+    depends_on:
+      - mysql
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
+```
+
+#### 3️⃣ Start the App
+
+```bash
+docker-compose up --build -d
+```
+
+#### 4️⃣ Access the App
+
+```
+http://localhost:5000
 ```
 
 ---
@@ -124,21 +170,39 @@ docker-flask-login-app/
 ├── config.py
 ├── requirements.txt
 ├── Dockerfile
+├── docker-compose.yml
 ├── templates/
-│   └── login.html
-│   └── register.html
-│   └── dashboard.html
-└── static/
-    └── style.css
+    ├── login.html
+    ├── register.html
+    └── dashboard.html
+
 ```
 
 ---
 
 ## 🔐 Login Features
 
-- ✅ Register new users  
-- 🔐 Secure login with credentials  
-- 🗃️ MySQL database integration for storing user data  
-- 🔒 Passwords stored securely using encryption
+* ✅ Register new users
+* 🔐 Secure login with credentials
+* 🗃 MySQL database integration for storing user data
+* 🔒 Passwords stored securely using hashing (Werkzeug)
+
+---
+
+## 🧹 Cleanup
+
+To stop and remove containers and network:
+
+```bash
+docker-compose down
+```
+
+Or, if running manually:
+
+```bash
+docker stop <container_name_or_id>
+docker rm <container_name_or_id>
+docker network rm <network_name>
+```
 
 
